@@ -1,10 +1,9 @@
 <html>
-
 <head>
   <title>Ordering Stack - Websocket receiver - tool to easly receive messages from webSockets</title>
   <meta charset="UTF-8">
   <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6.0.0/bundles/stomp.umd.min.js"></script>
-<!--  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>-->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script type="text/javascript">
     function connectWS() {
       var authData = JSON.parse(document.getElementById('authData').value);
@@ -22,13 +21,12 @@
 
     function log(str) {
       const d = document.getElementById('ws-output');
-      d.innerText += str + '\n';
+      d.innerHTML += "<div style='margin-bottom:12px;background-color:#efefef'>"+str + '</div>';
     }
 
     function connectWebSockets({ baseURL, tenant, venue, accessToken, userUUID }) {
       const stompConfig = {
         //brokerURL: `${baseURL}/ws`,  
-        brokerURL: `wss://ordering.3e.pl/websocket`,
         connectHeaders: {
           login: accessToken,
           passcode: null
@@ -43,16 +41,16 @@
           log('Websocket connected.');
           client.subscribe(`/order-changes/${tenant}/${userUUID}`, function (data) {
             var message = JSON.parse(data.body);
-            log(`ORDER CHANGE:  ${data.body}`);
+            log(`<b>ORDER CHANGE</b>:  ${data.body}`);
           });
           client.subscribe(`/notifications/${tenant}/${userUUID}`, function (data) {
             var message = JSON.parse(data.body);
-            log(`NOTIFICATION:  ${data.body}`);
+            log(`<b>NOTIFICATION</b>:  ${data.body}`);
           });
-          // client.subscribe(`/kds/${tenant}/${venue}`, function (data) {
-          //   var message = JSON.parse(data.body);
-          //   console.log(`KDS:  ${message}`);
-          // });
+          client.subscribe(`/kds/${tenant}/${venue}`, function (data) {
+            var message = JSON.parse(data.body);
+            log(`<b>KDS:</b>  ${data.body}`);
+          });
         },
         onDisconnect: async function () {
           log('Websocket disconnected.');
@@ -71,17 +69,17 @@
         discardWebsocketOnCommFailure: true,
       };
       const client = new StompJs.Client(stompConfig);
-      // client.webSocketFactory = () => {
-      //   const ws = new SockJS(`${baseURL}/ws`);
-      //   return ws;
-      // };
+      client.webSocketFactory = () => {
+        const ws = new SockJS(`${baseURL}/ws`);
+        return ws;
+      };
       client.activate();
     }
   </script>
 </head>
 
 <body>
-  Enter response from /auth-oauth2/oauth/token<br />
+  Enter response from /auth-oauth2/oauth/token <br/>or from browser dev tools (Application / local storage / value of <u>3e_ORDERING.1.0.0KDS.BASIC_TOKEN</u>)<br />
   <textarea cols="80" rows="6" id="authData"></textarea><br /><br />
   Ordering Stack API Base URL</br>
   <input id="baseURL" type="text" size="30" value="https://ordering.3e.pl" /><br /><br />
